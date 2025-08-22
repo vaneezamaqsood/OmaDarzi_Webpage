@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Oma Darzi — Tailored Jeans & Shirts</title>
+  <meta name="description" content="Tailored jeans and shirts, custom fit using an on-device AI body measurement tool.">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="icon" href="data:,">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <span class="logo">Oma Darzi</span>
+        <span class="tag">Tailored Jeans & Shirts</span>
+      </div>
+      <nav class="nav">
+        <a href="#products">Products</a>
+        <a href="#ai-fit">AI Fit</a>
+        <a href="#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-inner">
+        <h1>Perfect Fit, Crafted For You</h1>
+        <p>Premium jeans and shirts with measurements captured by your camera. On-device. Private. Fast.</p>
+        <div class="hero-cta">
+          <a class="btn primary" href="#ai-fit">Find Your Fit</a>
+          <a class="btn" href="#products">Shop Now</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="products" class="products">
+      <div class="container">
+        <h2>Our Bestsellers</h2>
+        <div class="grid">
+          <article class="card">
+            <div class="card-media placeholder jeans"></div>
+            <div class="card-body">
+              <h3>Selvedge Denim Jeans</h3>
+              <p>Classic straight fit, premium denim, built to last.</p>
+              <div class="card-actions">
+                <span class="price">$89</span>
+                <button class="btn small">Add to Cart</button>
+              </div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-media placeholder shirt"></div>
+            <div class="card-body">
+              <h3>Oxford Cloth Shirt</h3>
+              <p>Crisp, breathable, and tailored to your exact size.</p>
+              <div class="card-actions">
+                <span class="price">$69</span>
+                <button class="btn small">Add to Cart</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="ai-fit" class="ai-fit">
+      <div class="container ai-grid">
+        <div class="ai-copy">
+          <h2>AI Body Measurement</h2>
+          <p>Use your camera to estimate key measurements. Runs entirely in your browser — we don’t store or send video anywhere.</p>
+
+          <form id="fit-form" class="fit-form" autocomplete="off">
+            <label> Your height (cm)
+              <input id="heightCm" type="number" inputmode="numeric" min="100" max="230" step="1" placeholder="e.g. 174" required>
+            </label>
+            <div class="controls">
+              <button id="startBtn" type="button" class="btn primary">Start Camera</button>
+              <button id="stopBtn" type="button" class="btn" disabled>Stop</button>
+            </div>
+            <p class="help">Stand ~2m from camera, full body visible, good lighting. Face the camera in a natural stance.</p>
+          </form>
+
+          <div class="results" id="results">
+            <h3>Estimated Measurements</h3>
+            <ul>
+              <li><strong>Shoulder width</strong>: <span id="shoulderWidth">–</span> cm</li>
+              <li><strong>Chest (circumference)</strong>: <span id="chestCirc">–</span> cm</li>
+              <li><strong>Hip width</strong>: <span id="hipWidth">–</span> cm</li>
+              <li><strong>Waist (circumference, est.)</strong>: <span id="waistCirc">–</span> cm</li>
+              <li><strong>Inseam</strong>: <span id="inseam">–</span> cm</li>
+            </ul>
+            <p class="disclaimer">Estimates only. For precision tailoring, our team will confirm measurements.</p>
+          </div>
+        </div>
+
+        <div class="ai-viewport">
+          <div class="video-wrap">
+            <video id="inputVideo" playsinline></video>
+            <canvas id="outputCanvas"></canvas>
+          </div>
+          <div class="privacy-note">
+            <span>Privacy</span>
+            <p>Video stays on your device. Permission can be revoked anytime via your browser.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="contact">
+      <div class="container contact-inner">
+        <h2>Contact</h2>
+        <p>Email: <a href="mailto:hello@omadarzi.com">hello@omadarzi.com</a></p>
+        <p>Instagram: <a href="https://instagram.com" target="_blank" rel="noreferrer noopener">@omadarzi</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© <span id="year"></span> Oma Darzi. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
