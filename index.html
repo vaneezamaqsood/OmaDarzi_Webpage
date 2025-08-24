@@ -19,6 +19,7 @@
       <nav class="nav">
         <a href="#products">Products</a>
         <a href="#ai-fit">AI Fit</a>
+        <a href="#customizer">Customizer</a>
         <a href="#contact">Contact</a>
       </nav>
     </div>
@@ -109,6 +110,13 @@
       </div>
     </section>
 
+    <section id="customizer" class="products">
+      <div class="container">
+        <h2>Design Your Garment</h2>
+        <div id="customizer-root"></div>
+      </div>
+    </section>
+
     <section id="contact" class="contact">
       <div class="container contact-inner">
         <h2>Contact</h2>
@@ -128,5 +136,202 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="./script.js"></script>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    function Tag(props) {
+      return React.createElement('span', { style: { background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 12, padding: '6px 10px', display: 'inline-flex' } }, props.children);
+    }
+
+    function OmadarziCustomizer({ brand = { primary: '#111827', secondary: '#d4af37' }, onLaunchCamera, onAddToCart, onSaveDesign }) {
+      const [product, setProduct] = useState('shirt');
+      const [fabricColor, setFabricColor] = useState('#111827');
+      const [stitchColor, setStitchColor] = useState('#d4af37');
+      const [accentColor, setAccentColor] = useState('#ffffff');
+      const [fit, setFit] = useState('Regular');
+      const [collar, setCollar] = useState('Spread');
+      const [sleeve, setSleeve] = useState('Long');
+      const [monogram, setMonogram] = useState('OM');
+      const [wash, setWash] = useState('Mid');
+      const [jeanRise, setJeanRise] = useState('Mid');
+      const [jeanLeg, setJeanLeg] = useState('Straight');
+      const [measurements, setMeasurements] = useState({ height: null, chest: null, waist: null, inseam: null, sleeve: null });
+
+      const fitScale = useMemo(() => (fit === 'Slim' ? 0.96 : fit === 'Relaxed' ? 1.04 : 1.0), [fit]);
+
+      const washColor = useMemo(() => {
+        switch (wash) {
+          case 'Raw': return '#1f2a44';
+          case 'Mid': return '#304b7a';
+          case 'Light': return '#6f88b8';
+          case 'Black': return '#151515';
+          default: return '#304b7a';
+        }
+      }, [wash]);
+
+      const productColor = product === 'shirt' ? fabricColor : washColor;
+
+      function mapMeasurementsToSize(m, prod) {
+        if (!m.height || !m.chest || !m.waist) return 'Custom';
+        if (prod === 'shirt') {
+          if (m.chest < 92) return 'S';
+          if (m.chest < 104) return 'M';
+          if (m.chest < 112) return 'L';
+          return 'XL';
+        } else {
+          if (m.waist < 78) return '28';
+          if (m.waist < 84) return '30';
+          if (m.waist < 90) return '32';
+          if (m.waist < 96) return '34';
+          return '36+';
+        }
+      }
+
+      function skuFrom(x) {
+        return [x.product === 'shirt' ? 'SH' : 'JN', x.fit?.[0] || 'R', x.collar?.[0] || 'S', x.sleeve?.[0] || 'L', x.wash?.[0] || 'M', x.rise?.[0] || 'M', x.leg?.[0] || 'S'].join('-');
+      }
+
+      function buildPayload() {
+        const basePrice = product === 'shirt' ? 69 : 79;
+        const extras = (product === 'shirt' && monogram && monogram.length ? 5 : 0) + (product === 'jeans' && wash === 'Raw' ? 20 : 0);
+        const total = basePrice + extras;
+        const sku = skuFrom({ product, fit, collar, sleeve, monogram, wash, rise: jeanRise, leg: jeanLeg });
+        return {
+          sku,
+          product,
+          fit,
+          collar,
+          sleeve,
+          monogram,
+          wash,
+          rise: jeanRise,
+          leg: jeanLeg,
+          colors: { fabric: fabricColor, stitch: stitchColor, accent: accentColor },
+          brand,
+          measurements,
+          sizeLabel: mapMeasurementsToSize(measurements, product),
+          price: basePrice,
+          extras,
+          total,
+          currency: 'EUR'
+        };
+      }
+
+      function handleLaunchCamera() {
+        try { document.getElementById('startBtn')?.click(); } catch {}
+        if (onLaunchCamera) onLaunchCamera();
+        const m = window.omadarziMeasure ? window.omadarziMeasure() : null;
+        if (m) setMeasurements(m);
+      }
+
+      return (
+        <div>
+          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="card" style={{ overflow: 'hidden' }}>
+              <div className="card-media" style={{ background: productColor }}></div>
+              <div className="card-body">
+                <div className="card-actions" style={{ marginTop: 0 }}>
+                  <div>
+                    <button className={"btn small"} onClick={() => setProduct('shirt')}>Shirt</button>
+                    <button className={"btn small"} style={{ marginLeft: 8 }} onClick={() => setProduct('jeans')}>Jeans</button>
+                  </div>
+                  <span className="price">{product === 'shirt' ? '$69' : '$79'}</span>
+                </div>
+                <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+                  {product === 'shirt' && (
+                    <>
+                      <label>Fabric color <input type="color" value={fabricColor} onChange={(e) => setFabricColor(e.target.value)} /></label>
+                      <label>Stitch color <input type="color" value={stitchColor} onChange={(e) => setStitchColor(e.target.value)} /></label>
+                      <label>Accent color <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} /></label>
+                      <label>Fit
+                        <select value={fit} onChange={(e) => setFit(e.target.value)}>
+                          <option>Slim</option>
+                          <option>Regular</option>
+                          <option>Relaxed</option>
+                        </select>
+                      </label>
+                      <label>Collar
+                        <select value={collar} onChange={(e) => setCollar(e.target.value)}>
+                          <option>Spread</option>
+                          <option>Button-Down</option>
+                          <option>Mandarin</option>
+                        </select>
+                      </label>
+                      <label>Sleeve
+                        <select value={sleeve} onChange={(e) => setSleeve(e.target.value)}>
+                          <option>Long</option>
+                          <option>Short</option>
+                        </select>
+                      </label>
+                      <label>Monogram <input value={monogram} maxLength={3} onChange={(e) => setMonogram(e.target.value)} /></label>
+                    </>
+                  )}
+                  {product === 'jeans' && (
+                    <>
+                      <label>Wash
+                        <select value={wash} onChange={(e) => setWash(e.target.value)}>
+                          <option>Raw</option>
+                          <option>Mid</option>
+                          <option>Light</option>
+                          <option>Black</option>
+                        </select>
+                      </label>
+                      <label>Rise
+                        <select value={jeanRise} onChange={(e) => setJeanRise(e.target.value)}>
+                          <option>Low</option>
+                          <option>Mid</option>
+                          <option>High</option>
+                        </select>
+                      </label>
+                      <label>Leg
+                        <select value={jeanLeg} onChange={(e) => setJeanLeg(e.target.value)}>
+                          <option>Tapered</option>
+                          <option>Straight</option>
+                          <option>Wide</option>
+                        </select>
+                      </label>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-body">
+                <div className="card-actions" style={{ marginTop: 0 }}>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 800 }}>Measurement status</p>
+                    <p className="help">Connect your camera to auto-fill size for a guaranteed fit.</p>
+                  </div>
+                  <button className="btn small" onClick={handleLaunchCamera}>Launch camera</button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 8, marginTop: 8 }}>
+                  <Tag>Height: {measurements.height ?? '—'}</Tag>
+                  <Tag>Chest/Waist: {measurements.chest ?? measurements.waist ?? '—'}</Tag>
+                  <Tag>Inseam/Sleeve: {measurements.inseam ?? measurements.sleeve ?? '—'}</Tag>
+                </div>
+                <p className="help" style={{ marginTop: 8 }}>Mapped size: {mapMeasurementsToSize(measurements, product)}</p>
+
+                <div className="hero-cta" style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                  <button className="btn primary" onClick={() => onAddToCart ? onAddToCart(buildPayload()) : console.log('ADD_TO_CART', buildPayload())}>Add to cart</button>
+                  <button className="btn" onClick={() => onSaveDesign ? onSaveDesign(buildPayload()) : console.log('SAVE_DESIGN', buildPayload())}>Save design</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const rootEl = document.getElementById('customizer-root');
+    if (rootEl) {
+      const root = ReactDOM.createRoot(rootEl);
+      root.render(<OmadarziCustomizer />);
+    }
+  </script>
 </body>
 </html>

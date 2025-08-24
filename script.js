@@ -18,6 +18,7 @@
 
   let stream = null;
   let running = false;
+  let lastMeasurements = { height: null, chest: null, waist: null, inseam: null, sleeve: null };
 
   const pose = new Pose.Pose({
     locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
@@ -65,12 +66,10 @@
       y: lm.y * canvas.height
     }));
 
-    // Draw skeleton
     if (window.drawConnectors && window.drawLandmarks && window.POSE_CONNECTIONS) {
       window.drawConnectors(ctx, landmarks, window.POSE_CONNECTIONS, { color: '#22d3ee', lineWidth: 2 });
       window.drawLandmarks(ctx, landmarks, { color: '#22c55e', radius: 3 });
     } else {
-      // Fallback: draw small points
       ctx.fillStyle = '#22c55e';
       landmarks.forEach(pt => { ctx.beginPath(); ctx.arc(pt.x, pt.y, 2, 0, Math.PI * 2); ctx.fill(); });
     }
@@ -98,6 +97,8 @@
     return { x: (la.x + lb.x) / 2, y: (la.y + lb.y) / 2 };
   }
 
+  function round1(n) { return Math.round(n * 10) / 10; }
+
   function estimateMeasurements(lms) {
     const heightCm = parseFloat(heightInput.value);
     if (!heightCm || heightCm < 100 || heightCm > 230) return;
@@ -105,8 +106,8 @@
     const VW = canvas.width;
     const VH = canvas.height;
 
-    const headIdx = [0, 7, 8]; // nose, left_ear, right_ear
-    const footIdx = [29, 30, 27, 28]; // heels, ankles
+    const headIdx = [0, 7, 8];
+    const footIdx = [29, 30, 27, 28];
 
     let minY = Infinity;
     let maxY = -Infinity;
@@ -119,17 +120,20 @@
     const pixelHeight = maxY - minY;
     const cmPerPixel = heightCm / pixelHeight;
 
-    const shoulderPx = distancePx(lms, 11, 12); // shoulders
-    const hipPx = distancePx(lms, 23, 24); // hips
+    const shoulderPx = distancePx(lms, 11, 12);
+    const hipPx = distancePx(lms, 23, 24);
 
     let shoulderCm = shoulderPx ? shoulderPx * cmPerPixel : null;
     let hipCm = hipPx ? hipPx * cmPerPixel : null;
 
-    // Approximate circumferences from flat widths (very rough multipliers)
     const chestCircCm = shoulderCm ? shoulderCm * 2.25 : null;
     const waistCircCm = hipCm ? hipCm * 2.0 : null;
 
-    // Inseam: from crotch (mid-hip midpoint) to lowest ankle
+    const leftSleevePx = distancePx(lms, 11, 15);
+    const rightSleevePx = distancePx(lms, 12, 16);
+    const sleevePx = Math.max(leftSleevePx || 0, rightSleevePx || 0) || null;
+    const sleeveCm = sleevePx ? sleevePx * cmPerPixel : null;
+
     const crotch = midpoint(lms, 23, 24);
     const leftAnkle = getLandmark(lms, 27);
     const rightAnkle = getLandmark(lms, 28);
@@ -149,6 +153,14 @@
     setText(chestEl, chestCircCm);
     setText(waistEl, waistCircCm);
     setText(inseamEl, inseamCm);
+
+    lastMeasurements = {
+      height: round1(heightCm),
+      chest: chestCircCm ? round1(chestCircCm) : null,
+      waist: waistCircCm ? round1(waistCircCm) : null,
+      inseam: inseamCm ? round1(inseamCm) : null,
+      sleeve: sleeveCm ? round1(sleeveCm) : null
+    };
   }
 
   function setText(el, val) {
@@ -182,7 +194,7 @@
 
     const process = async () => {
       if (!running) return;
-      try { await pose.send({ image: video }); } catch (e) { /* ignore frame drops */ }
+      try { await pose.send({ image: video }); } catch (e) { }
       requestAnimationFrame(process);
     };
     requestAnimationFrame(process);
@@ -211,4 +223,6 @@
 
   if (startBtn) startBtn.addEventListener('click', start);
   if (stopBtn) stopBtn.addEventListener('click', stop);
+
+  window.omadarziMeasure = function() { return lastMeasurements; };
 })();
