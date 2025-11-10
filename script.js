@@ -5,7 +5,6 @@
   const video = document.getElementById('inputVideo');
   const canvas = document.getElementById('outputCanvas');
   const ctx = canvas.getContext('2d');
-
   const startBtn = document.getElementById('startBtn');
   const stopBtn = document.getElementById('stopBtn');
   const heightInput = document.getElementById('heightCm');
